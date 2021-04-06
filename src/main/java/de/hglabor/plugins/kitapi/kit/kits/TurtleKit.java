@@ -11,8 +11,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -20,13 +24,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Hotkeyyy
  * @since 2021/02/25
  */
-public class TurtleKit extends AbstractKit {
+public class TurtleKit extends AbstractKit implements Listener {
     public static final TurtleKit INSTANCE = new TurtleKit();
 
     @MaterialArg
@@ -46,62 +52,74 @@ public class TurtleKit extends AbstractKit {
         inTurtleTime = 5;
     }
 
+    private final List<Block> turtleBlocks = new ArrayList<>();
+
 
     @KitEvent
     @Override
     public void onPlayerRightClickKitItem(PlayerInteractEvent event) {
-            HashMap<Location, Material> wallBlocks = new HashMap<>();
-            HashMap<Location, Material> oldBlocks = new HashMap<>();
-            Location loc = event.getPlayer().getLocation().clone();
-            for (int bx = 0; bx <= size; bx++) {
-                for (int by = 0; by <= size; by++) {
-                    for (int bz = 0; bz <= size; bz++) {
-                        if ((by == 0 || by == size)) {
-                            if (bx != 0 && bz != 0 && bx != size && bz != size) {
-                                wallBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
-                            }
-                        } else if (bx == 0 || bz == 0 || bx == size || bz == size) {
-                            if ((bx == 0 && bz == 0) || (bx == size && bz == size) || (bx == 0 && bz == size) || (bz == 0 && bx == size)) {
-                                oldBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
-                            } else {
-                                wallBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
-                            }
-                        } else {
-                            oldBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
+        HashMap<Location, Material> wallBlocks = new HashMap<>();
+        HashMap<Location, Material> oldBlocks = new HashMap<>();
+        Location loc = event.getPlayer().getLocation().clone();
+        for (int bx = 0; bx <= size; bx++) {
+            for (int by = 0; by <= size; by++) {
+                for (int bz = 0; bz <= size; bz++) {
+                    if ((by == 0 || by == size)) {
+                        if (bx != 0 && bz != 0 && bx != size && bz != size) {
+                            wallBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
                         }
+                    } else if (bx == 0 || bz == 0 || bx == size || bz == size) {
+                        if ((bx == 0 && bz == 0) || (bx == size && bz == size) || (bx == 0 && bz == size) || (bz == 0 && bx == size)) {
+                            oldBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
+                        } else {
+                            wallBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
+                        }
+                    } else {
+                        oldBlocks.put(loc.clone().add(bx - size / 2, by, bz - size / 2), loc.clone().add(bx - size / 2, by, bz - size / 2).getBlock().getType());
                     }
                 }
             }
+        }
 
-            oldBlocks.forEach((location, mat) -> {
-                location.getBlock().setType(Material.AIR);
-            });
+        oldBlocks.forEach((location, mat) -> {
+            location.getBlock().setType(Material.AIR);
+        });
 
-            wallBlocks.forEach((location, mat) -> {
-                location.getBlock().setType(Material.AIR);
+        wallBlocks.forEach((location, mat) -> {
+            turtleBlocks.add(location.getBlock());
+            location.getBlock().setType(Material.AIR);
+            location.getBlock().setType(material);
+
+        });
+
+
+        event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 1, 1);
+        event.getPlayer().setFallDistance(0);
+        event.getPlayer().teleport(loc.add(0, 1, 0));
+        event.getPlayer().setHealthScale(event.getPlayer().getMaxHealth());
+        event.getPlayer().setFoodLevel(20);
+        event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 400, 3));
+        event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 400, 3));
+
+        Bukkit.getScheduler().runTaskLater(KitApi.getInstance().getPlugin(), () -> {
+            oldBlocks.forEach((location, material) -> {
                 location.getBlock().setType(material);
-
             });
+            wallBlocks.forEach((location, material) -> {
+                turtleBlocks.remove(location.getBlock());
+                location.getBlock().setType(material);
+            });
+            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_SHULKER_OPEN, 1, 1);
 
 
-            event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_SHULKER_HURT_CLOSED, 1, 1);
-            event.getPlayer().setFallDistance(0);
-            event.getPlayer().teleport(loc.add(0, 1, 0));
-            event.getPlayer().setHealthScale(event.getPlayer().getMaxHealth());
-            event.getPlayer().setFoodLevel(20);
-            event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 400, 3));
-            event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 400, 3));
-
-            Bukkit.getScheduler().runTaskLater(KitApi.getInstance().getPlugin(), () -> {
-                oldBlocks.forEach((location, material) -> {
-                    location.getBlock().setType(material);
-                });
-                wallBlocks.forEach((location, material) -> {
-                    location.getBlock().setType(material);
-                });
-                event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_SHULKER_OPEN, 1, 1);
-
-
-            }, 20 * inTurtleTime);
+        }, 20L * inTurtleTime);
     }
+
+    @EventHandler
+    public void blockBreak(BlockBreakEvent e) {
+        if (turtleBlocks.contains(e.getBlock())) {
+            e.setCancelled(true);
+        }
+    }
+
 }
