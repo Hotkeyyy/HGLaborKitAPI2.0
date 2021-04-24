@@ -5,6 +5,7 @@ import de.hglabor.plugins.kitapi.kit.AbstractKit;
 import de.hglabor.plugins.kitapi.kit.events.KitEvent;
 import de.hglabor.plugins.kitapi.kit.settings.FloatArg;
 import de.hglabor.plugins.kitapi.kit.settings.IntArg;
+import de.hglabor.plugins.kitapi.player.KitPlayer;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -31,6 +32,11 @@ public class BlinkKit extends AbstractKit {
     @Override
     public void onPlayerRightClickKitItem(PlayerInteractEvent event) {
         Player player = event.getPlayer();
+        KitPlayer kitPlayer = KitApi.getInstance().getPlayer(player);
+        Player lastPlayer = kitPlayer.getLastHitInformation().getLastPlayer();
+        boolean canBlink = !(lastPlayer != null && !KangarooKit.INSTANCE.isLookingAt(player,
+                lastPlayer.getLocation().add(0, lastPlayer.getEyeHeight(), 0)));
+        if (kitPlayer.isInCombat() && !canBlink) return;
         player.teleport(player.getLocation().add(player.getLocation().getDirection().normalize().multiply(blinkDistance)));
         player.getLocation().subtract(0, 1, 0).getBlock().setType(Material.OAK_LEAVES);
         player.playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 100, 100);

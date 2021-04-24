@@ -103,7 +103,7 @@ public class KangarooKit extends AbstractKit {
     }
 
     // mathe, nicht hinterfragen (rechnet aus ob man sich ungefähr in die richtung von dem gegner/target boosten will)
-    private boolean isLookingAt(Player p, Location target) {
+    public boolean isLookingAt(Player p, Location target) {
         Location head = p.getLocation().add(0, p.getEyeHeight(), 0);
         Vector look = p.getLocation().getDirection().normalize();
         Vector direction = head.subtract(target).toVector().normalize();
