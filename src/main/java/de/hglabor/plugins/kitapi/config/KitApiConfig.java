@@ -41,9 +41,8 @@ public final class KitApiConfig {
     public void register(File folder) {
         try {
             kitFile = new File(folder, "kitConfig.yml");
-            if (!kitFile.exists()) {
-                kitFile.createNewFile();
-            }
+            if(!kitFile.getParentFile().exists()) kitFile.getParentFile().mkdirs();
+            if (!kitFile.exists()) kitFile.createNewFile();
             kitConfiguration = YamlConfiguration.loadConfiguration(kitFile);
             kitConfiguration.addDefault("kit.amount", 1);
             kitConfiguration.addDefault("debug", false);
