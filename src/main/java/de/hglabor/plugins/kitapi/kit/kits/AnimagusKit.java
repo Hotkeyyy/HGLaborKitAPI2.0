@@ -121,6 +121,7 @@ public class AnimagusKit extends AbstractKit implements Listener {
     @KitEvent
     @Override
     public void onPlayerGetsAttackedByLivingEntity(EntityDamageByEntityEvent event, Player player, LivingEntity attacker) {
+        if(!(attacker instanceof Player)) return;
         DisguiseAPI.undisguiseToAll(player);
     }
 
