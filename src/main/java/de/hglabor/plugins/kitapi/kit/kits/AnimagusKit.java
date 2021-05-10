@@ -1,5 +1,6 @@
 package de.hglabor.plugins.kitapi.kit.kits;
 
+import de.hglabor.plugins.kitapi.KitApi;
 import de.hglabor.plugins.kitapi.kit.AbstractKit;
 import de.hglabor.plugins.kitapi.kit.events.KitEvent;
 import de.hglabor.plugins.kitapi.player.KitPlayer;
@@ -13,9 +14,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.ClickType;
@@ -23,17 +26,13 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.UUID;
 
 import static de.hglabor.utils.localization.Localization.t;
 
 public class AnimagusKit extends AbstractKit implements Listener {
     public static final AnimagusKit INSTANCE = new AnimagusKit();
-
-    private final HashMap<UUID, HashSet<EntityType>> receivedMobs = new HashMap<>();
-
+    private final String attributeKey = "receivedMobs";
     private final Component inventoryName;
 
     protected AnimagusKit() {
@@ -46,8 +45,10 @@ public class AnimagusKit extends AbstractKit implements Listener {
     @Override
     public void onPlayerKillsLivingEntity(EntityDeathEvent event, Player killer, Entity entity) {
         if (!DisguiseType.getType(event.getEntityType()).isMob()) return;
-        receivedMobs.computeIfAbsent(killer.getUniqueId(), k -> new HashSet<>());
-        receivedMobs.get(killer.getUniqueId()).add(event.getEntityType());
+        KitPlayer kitPlayer = KitApi.getInstance().getPlayer(killer);
+        HashSet<EntityType> entitys = kitPlayer.getKitAttributeOrDefault(attributeKey, new HashSet<>());
+        entitys.add(event.getEntityType());
+        kitPlayer.putKitAttribute(attributeKey, entitys);
     }
 
     @KitEvent
@@ -57,12 +58,11 @@ public class AnimagusKit extends AbstractKit implements Listener {
     }
 
     private Inventory getMobInventory(Player player) {
-
+        KitPlayer kitPlayer = KitApi.getInstance().getPlayer(player);
         Inventory inventory = Bukkit.createInventory(null, 6 * 9, inventoryName);
         inventory.addItem(new ItemBuilder(Material.PAPER).setName(t("animagus.undisguise", ChatUtils.locale(player))).build());
 
-        receivedMobs.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>());
-        for (EntityType entityType : receivedMobs.get(player.getUniqueId())) {
+        for (EntityType entityType : kitPlayer.getKitAttributeOrDefault(attributeKey, new HashSet<EntityType>())) {
             if (!DisguiseType.getType(entityType).isMob() ||
                     entityType.equals(EntityType.ILLUSIONER) ||
                     entityType.equals(EntityType.ARMOR_STAND) ||
@@ -111,9 +111,17 @@ public class AnimagusKit extends AbstractKit implements Listener {
         DisguiseAPI.disguiseEntity(event.getWhoClicked(), mobDisguise);
     }
 
+    @KitEvent
     @Override
     public void onKitPlayerDeath(PlayerDeathEvent event) {
-        receivedMobs.get(event.getEntity().getUniqueId()).clear();
+        KitPlayer kitPlayer = KitApi.getInstance().getPlayer(event.getEntity());
+        kitPlayer.getKitAttributeOrDefault(attributeKey, new HashSet<EntityType>()).clear();
+    }
+
+    @KitEvent
+    @Override
+    public void onPlayerGetsAttackedByLivingEntity(EntityDamageByEntityEvent event, Player player, LivingEntity attacker) {
+        DisguiseAPI.undisguiseToAll(player);
     }
 
     @Override
