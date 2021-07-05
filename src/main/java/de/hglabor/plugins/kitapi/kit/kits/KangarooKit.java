@@ -106,6 +106,9 @@ public class KangarooKit extends AbstractKit {
     private boolean isLookingAt(Player p, Location target) {
         Location head = p.getLocation().add(0, p.getEyeHeight(), 0);
         Vector look = p.getLocation().getDirection().normalize();
+        if (p.getWorld() != target.getWorld()) {
+            return false;
+        }
         Vector direction = head.subtract(target).toVector().normalize();
         Vector boost = p.getLocation().getDirection().multiply(1.5).setY(0);
         Location newLocation = p.getLocation().add(boost);

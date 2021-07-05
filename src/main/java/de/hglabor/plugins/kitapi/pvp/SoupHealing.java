@@ -5,6 +5,7 @@ import de.hglabor.plugins.kitapi.kit.kits.SpitKit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -17,7 +18,7 @@ import java.util.List;
 public class SoupHealing implements Listener {
     public static final List<Material> SOUP_MATERIAL = Arrays.asList(Material.MUSHROOM_STEW, Material.SUSPICIOUS_STEW);
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onRightClickSoup(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (event.getAction() == Action.LEFT_CLICK_AIR) {

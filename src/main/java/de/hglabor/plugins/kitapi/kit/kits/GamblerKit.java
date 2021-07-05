@@ -10,16 +10,14 @@ import de.hglabor.utils.localization.Localization;
 import de.hglabor.utils.noriskutils.ChatUtils;
 import de.hglabor.utils.noriskutils.ItemBuilder;
 import de.hglabor.utils.noriskutils.RandomCollection;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -127,7 +125,7 @@ public class GamblerKit extends AbstractKit implements Listener {
         cantBeClassifiedBad.add("§7Lesestunde", 0.2, p -> {
             p.getLocation().getBlock().setType(Material.LECTERN);
         });
-        cantBeClassifiedBad.add("§0MLG", 0.2, p -> {
+        cantBeClassifiedBad.add("§0MLG", 0.1, p -> {
             int x = (int) p.getLocation().getX();
             int z = (int) p.getLocation().getZ();
             p.teleport(new Location(p.getWorld(), x, p.getWorld().getHighestBlockYAt(x, z) + 30, z));
@@ -147,7 +145,7 @@ public class GamblerKit extends AbstractKit implements Listener {
             String y = String.valueOf(location.getBlockY());
             String z = String.valueOf(location.getBlockZ());
             //TODO Localization
-            ChatUtils.broadcastMessage(Localization.INSTANCE.getMessage("gambler.coordsLeak", ImmutableMap.of("x", x, "y", y, "z", z), ChatUtils.locale(p)));
+            ChatUtils.broadcastMessage(Localization.INSTANCE.getMessage("gambler.coordsLeak", ImmutableMap.of("x", x, "y", y, "z", z, "playerName", p.getName()), ChatUtils.locale(p)));
         });
 
         //POTION EFFECTS
@@ -197,9 +195,6 @@ public class GamblerKit extends AbstractKit implements Listener {
         goodItems.add("§9Fishing Rod", 0.3, p -> KitApi.getInstance().giveKitItemsIfInvFull(KitApi.getInstance().getPlayer(p), this,
                 Collections.singletonList(new ItemBuilder(Material.FISHING_ROD).setEnchantment(Enchantment.LUCK, 3).build())));
 
-        goodItems.add("§2Spawn Egg", 0.1, p -> KitApi.getInstance().giveKitItemsIfInvFull(KitApi.getInstance().getPlayer(p), this,
-                Collections.singletonList(new ItemStack(Material.CREEPER_SPAWN_EGG))));
-
         goodItems.add("$fIron Sword", 0.15, p -> KitApi.getInstance().giveKitItemsIfInvFull(
                 KitApi.getInstance().getPlayer(p), this,
                 Collections.singletonList(new ItemStack(Material.IRON_SWORD, 1))));
@@ -214,7 +209,7 @@ public class GamblerKit extends AbstractKit implements Listener {
                 KitApi.getInstance().getPlayer(p), this,
                 Collections.singletonList(new ItemStack(Material.ENDER_PEARL, 1))));
 
-        goodItems.add("§bDiamond Sword", 0.01, p -> KitApi.getInstance().giveKitItemsIfInvFull(
+        goodItems.add("§bDiamond Sword", 0.25, p -> KitApi.getInstance().giveKitItemsIfInvFull(
                 KitApi.getInstance().getPlayer(p), this,
                 Collections.singletonList(new ItemStack(Material.DIAMOND_SWORD, 1))));
         goodItems.add("§6Revive", 0.05, p -> KitApi.getInstance().giveKitItemsIfInvFull(
@@ -261,7 +256,7 @@ public class GamblerKit extends AbstractKit implements Listener {
                         new ItemStack(Material.GOLDEN_HELMET, 1),
                         new ItemStack(Material.GOLDEN_SWORD, 1)
                 )));
-        goodItems.add("§fIron Set", 0.05, p -> KitApi.getInstance().giveKitItemsIfInvFull(
+        goodItems.add("§fIron Set", 0.075, p -> KitApi.getInstance().giveKitItemsIfInvFull(
                 KitApi.getInstance().getPlayer(p), this,
                 Arrays.asList(
                         new ItemStack(Material.IRON_BOOTS, 1),
@@ -277,6 +272,9 @@ public class GamblerKit extends AbstractKit implements Listener {
                         new ItemStack(Material.COCOA_BEANS, 16),
                         new ItemStack(Material.JUNGLE_LOG, 4)
                 )));
+
+        goodItems.add("§6WOBLE", 0.05, p -> p.getInventory().setHelmet(getWombleHead()));
+
 
         RandomCollection<Consumer<Player>> cantBeClassified = new RandomCollection<>();
         cantBeClassified.add("§dDoggos", 1, p -> {
@@ -294,7 +292,8 @@ public class GamblerKit extends AbstractKit implements Listener {
             horse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
         });
 
-        cantBeClassified.add("§7Normie§a+", 0.00003, p -> { // wenn das jemand holt gib ich dem 20 euro
+        cantBeClassified.add("§7Normie§a+", 0.0005, p -> {
+            ChatUtils.broadcastMessage(ChatColor.GREEN + p.getName() + " won Normie+");
             p.sendMessage(Localization.INSTANCE.getMessage("gambler.wonNormiePlus", ChatUtils.locale(p)));
         });
 
@@ -302,6 +301,14 @@ public class GamblerKit extends AbstractKit implements Listener {
         goodLuckCollection.add(1, goodPotionEffects);
         goodLuckCollection.add(1, goodItems);
         goodLuckCollection.add(0.75, cantBeClassified);
+    }
+
+    private ItemStack getWombleHead() {
+        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta meta = (SkullMeta) item.getItemMeta();
+        meta.setOwner("Wxmble");
+        item.setItemMeta(meta);
+        return item;
     }
 
     @Override
